@@ -96,13 +96,19 @@ jobs:
           paths:
             - frontend/dist
 
-#   test-frontend:
-#     docker:
-#       # Docker image here
-#     steps:
-#       # Checkout code from git
-#       # Restore from cache
-#       # Your job code here
+  test-frontend:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: test frontend
+          command: |
+            cd frontend
+            npm i
+            npm run test
                 
   test-backend:
     docker:
@@ -118,21 +124,27 @@ jobs:
             npm i
             npm run test
             
-#   scan-frontend:
-#     docker:
-#       # Docker image here
-#     steps:
-#       # Checkout code from git
-#       # Restore from cache
-#       # Your job code here
+  scan-frontend:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - run:
+          name: Check Frontend against security vulnerabilities
+          command: |
+            cd frontend
+            npm audit fix --audit-level=critical
 
-#   scan-backend:
-#     docker:
-#       # Docker image here
-#     steps:
-#       # Checkout code from git
-#       # Restore from cache
-#       # Your job code here
+  scan-backend:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - run:
+          name: Chek Backend against security vulnerabilities
+          command: |
+            cd backend
+            npm audit fix --audit-level=critical
 
 #   deploy-infrastructure:
 #     docker:
@@ -309,14 +321,14 @@ workflows:
           requires: [i-frontend-dependencies]
       - build-backend:
           requires: [i-backend-dependencies]
-#       - test-frontend:
-#           requires: [build-frontend]
+      - test-frontend:
+          requires: [build-frontend]
       - test-backend:
           requires: [build-backend]
-#       - scan-backend:
-#           requires: [build-backend]
-#       - scan-frontend:
-#           requires: [build-frontend]
+      - scan-backend:
+          requires: [build-backend]
+      - scan-frontend:
+          requires: [build-frontend]
 #       - deploy-infrastructure:
 #           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
 #           filters:
