@@ -184,7 +184,7 @@ jobs:
       
       - run:
           name: Ensure front-end infrastructure exist
-          working_directory: ./.circleci/files
+          working_directory: .circleci/files
           command: |
             aws cloudformation deploy \
               --template-file frontend.yml \
