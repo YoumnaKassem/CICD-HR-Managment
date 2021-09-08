@@ -104,19 +104,19 @@ jobs:
 #       # Restore from cache
 #       # Your job code here
                 
-test-backend:
-  docker:
-    - image: circleci/node:13.8.0
-  steps:
-    - checkout
-    - attach_workspace:
-      at: .
-    - run:
-        name: test backend
-        command: |
-          cd backend
-          npm i
-          npm run test
+  test-backend:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: test backend
+          command: |
+            cd backend
+            npm i
+            npm run test
             
 #   scan-frontend:
 #     docker:
