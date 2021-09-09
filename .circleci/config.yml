@@ -8,14 +8,10 @@ commands:
           name: Destroy environments
           when: on_fail
           command: |
+            aws s3 rb s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --force
             aws cloudformation delete-stack --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
             aws cloudformation delete-stack --stack-name updapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
-      - run:
-          name: Delete s3 bucket
-          when: on_fail
-          command: |
-            aws s3 rb s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --force
-            exit 0
+
 #   revert-migrations:
 #     description: Revert the last migration if successfully run in the current workflow.
 #     parameters:
@@ -203,7 +199,7 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - .circleci/ansible/inventory
+            - .circleci/ansible/inventory.txt
       - destroy-environment    
 
   configure-infrastructure:
