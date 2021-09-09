@@ -258,20 +258,14 @@ jobs:
           working_directory: backend
           command: |
             npm i
-            npm run build
-            npm run migrations > migration_status
-            echo $migration_status
-      - run:
-          name: Send migration results
-          working_directory: backend
-          command: |
-            if grep -q "has been executed successfully" migration_status
+            npm run migrations > migration.log
+            cat migration.log
+            if grep -q "has been executed successfully" migration.log
             then
               echo "DB migration successful."    
             else
               echo "DB migration failed, please verify setup! Probably the database already exists. Verify setup!"
             fi
-            echo "WorkflowID=${CIRCLE_WORKFLOW_ID:0:7}"
       - destroy-environment     
 
 #   deploy-frontend:
