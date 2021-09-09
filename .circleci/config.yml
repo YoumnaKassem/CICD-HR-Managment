@@ -238,22 +238,40 @@ jobs:
             ansible-playbook -i inventory.txt configure-server.yml
       - destroy-environment          
 
-#   run-migrations:
-#     docker:
-#       # Docker image here that supports NodeJS
-#     steps:
-#       # Checkout code from git
-#       - run:
-#           name: Run migrations
-#           command: |
-#             # Your code here
-#             exit 1
-#       - run:
-#           name: Send migration results to memstash
-#           command: |
-#             # Your code here
-#             exit 1
-#      # Here's where you will add some code to rollback on failure      
+  run-migrations:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install AWS CLI dependencies
+          working_directory: /tmp
+          command: |
+            sudo apt-get update && sudo apt-get install -yy less
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+      - run:
+          name: Run migrations
+          working_directory: backend
+          command: |
+            npm install
+            npm run migrations > migration_status
+            echo migration_status
+      - run:
+          name: Send migration results
+          working_directory: ./backend
+          command: |
+            if grep -q "has been executed successfully" migration_status
+            then
+              echo "DB migration successful."    
+            else
+              echo "DB migration failed, please verify setup! Probably the database already exists. Verify setup!"
+            fi
+            echo "WorkflowID=${CIRCLE_WORKFLOW_ID:0:7}"
+      - destroy-environment     
 
 #   deploy-frontend:
 #     docker:
