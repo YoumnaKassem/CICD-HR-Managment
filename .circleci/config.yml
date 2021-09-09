@@ -17,18 +17,12 @@ commands:
     steps:
       - run:
           name: Revert migrations
+          when: on_fail
           working_directory: backend
           command: |
-            SUCCESS=$(curl -H "token: 36559319-ce17-43ac-83c7-d10a61ffb469" --request GET https://api.memstash.io/values/DB_MIGRATION_${CIRCLE_WORKFLOW_ID:0:7})
-            SUCCESS = 1
-            if(( $SUCCESS==1)); 
-            then
               pwd
               ls -la
               npm run migrations:revert
-            fi
-          when: on_fail
-            
             
 jobs:
   i-backend-dependencies:
@@ -372,7 +366,7 @@ jobs:
             URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com/index.html"
             if curl -s ${URL} | grep "Welcome"
             then 
-              return 1
+              return 0
             else 
               return 1
             fi
