@@ -12,24 +12,23 @@ commands:
             aws cloudformation delete-stack --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
             aws cloudformation delete-stack --stack-name updapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
 
-#   revert-migrations:
-#     description: Revert the last migration if successfully run in the current workflow.
-#     parameters:
-#       # Add parameter here     
-#     steps:
-#       - run:
-#           name: Revert migrations
-#           # Add when this will run
-#           command: |
-#             # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-#             SUCCESS = 1
-#             if(( $SUCCESS==1 )); 
-#             then
-#             #  cd ~/project/backend
-#             #  npm install
-#             #  Add revert code here. You can find this in the Getting Started section.
-#               exit 1
-#             fi
+  revert-migrations:
+    description: Revert the last migration if successfully run in the current workflow.     
+    steps:
+      - run:
+          name: Revert migrations
+          working_directory: backend
+          command: |
+            SUCCESS=$(curl -H "token: 36559319-ce17-43ac-83c7-d10a61ffb469" --request GET https://api.memstash.io/values/DB_MIGRATION_${CIRCLE_WORKFLOW_ID:0:7})
+            SUCCESS = 1
+            if(( $SUCCESS==1)); 
+            then
+              pwd
+              ls -la
+              npm run migrations:revert
+            fi
+          when: on_fail
+            
             
 jobs:
   i-backend-dependencies:
@@ -262,32 +261,49 @@ jobs:
             cat migration.log
             if grep -q "has been executed successfully" migration.log
             then
-              echo "DB migration successful."    
+              echo "DB migration successful." 
+              curl -H "Content-Type: text/plain" -H "token: 36559319-ce17-43ac-83c7-d10a61ffb469" --request PUT --data "success" https://api.memstash.io/values/DB_MIGRATION_${CIRCLE_WORKFLOW_ID:0:7}   
             else
               echo "DB migration failed, please verify setup! Probably the database already exists. Verify setup!"
+              curl -H "Content-Type: text/plain" -H "token: 36559319-ce17-43ac-83c7-d10a61ffb469" --request PUT --data "fail" https://api.memstash.io/values/DB_MIGRATION_${CIRCLE_WORKFLOW_ID:0:7}
             fi
       - destroy-environment     
 
-#   deploy-frontend:
-#     docker:
-#       # Docker image here that supports AWS CLI
-#     steps:
-#       # Checkout code from git
-#       - run:
-#           name: Install dependencies
-#           command: |
-#             # your code here
-#       - run:
-#           name: Get backend url
-#           command: |
-#             # your code here
-#             export API_URL="http://${BACKEND_IP}:3030"
-#             echo "${API_URL}"
-#       - run:
-#           name: Deploy frontend objects
-#           command: |
-#             # your code here
-#       # Here's where you will add some code to rollback on failure      
+deploy-frontend:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install AWS CLI dependencies
+          working_directory: /tmp
+          command: |
+            sudo apt-get update && sudo apt-get install -yy less
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+      - run:
+          name: Get backend url
+          working_directory: frontend
+          command: |
+            export API_URL=$(curl -H "token: e1cf092a-dc27-49d2-8958-b87e5d9d57ef" --request GET https://api.memstash.io/values/BACKEND_URL)
+            echo "${API_URL}"
+            npm i
+            npm run build
+      - run:
+          name: Deploy frontend objects
+          working_directory: frontend
+          command: |
+            aws s3 cp ./dist "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
+      - persist_to_workspace:
+          root: .
+          paths:
+            - frontend/dist
+
+      - revert-migrations     
+      - destroy-environment
                     
 #   deploy-backend:
 #     docker:
