@@ -43,7 +43,7 @@ jobs:
       - checkout
       - run:
           name: npm install
-          working_directory: ./backend
+          working_directory: backend
           command: ls -la && npm install
       - persist_to_workspace:
           root: .
@@ -57,7 +57,7 @@ jobs:
       - checkout
       - run:
           name: npm install
-          working_directory: ./frontend
+          working_directory: frontend
           command: ls -la && npm install
       - persist_to_workspace:
           root: .
@@ -193,7 +193,7 @@ jobs:
               --tags project=udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7} 
       - run:
           name: Add back-end ip to ansible inventory
-          working_directory: ./.circleci/ansible
+          working_directory: .circleci/ansible
           command: |
             aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
@@ -206,24 +206,39 @@ jobs:
             - .circleci/ansible/inventory
       - destroy-environment    
 
-#   configure-infrastructure:
-#     docker:
-#       # Docker image here that supports Ansible
-#     steps:
-#       # Checkout code from git
-#       # Add ssh keys with fingerprint
-#       # attach workspace
-#       - run:
-#           name: Install dependencies
-#           command: |
-#             # Your code here
-#             exit 1
-#       - run:
-#           name: Configure server
-#           command: |
-#             # Your code here
-#             exit 1
-#       # Here's where you will add some code to rollback on failure      
+  configure-infrastructure:
+    docker:
+      - image: python:3.7-alpine3.12
+        environment:
+          TYPEORM_CONNECTION: $TYPEORM_CONNECTION
+          TYPEORM_HOST: $TYPEORM_HOST
+          TYPEORM_USERNAME: $TYPEORM_USERNAME
+          TYPEORM_PASSWORD: $TYPEORM_PASSWORD
+          TYPEORM_DATABASE: $TYPEORM_DATABASE
+          TYPEORM_MIGRATIONS: $TYPEORM_MIGRATIONS
+          TYPEORM_ENTITIES: $TYPEORM_ENTITIES
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["11:64:d6:54:63:f8:4f:bd:7f:dc:f2:51:32:ab:dd:85"]
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install dependencies
+          working_directory: .circleci/ansible
+          command: |
+            apk add --update ansible
+            pip3 install --upgrade pip
+            pip3 install awscli
+      - run:
+          name: Configure server
+          working_directory: .circleci/ansible
+          command: |
+            pwd &&
+            ls -la
+            cat inventory
+            ansible-playbook -i inventory configure-server.yml
+      - destroy-environment          
 
 #   run-migrations:
 #     docker:
