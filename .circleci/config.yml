@@ -226,13 +226,14 @@ jobs:
             apk add --update ansible
             pip3 install --upgrade pip
             pip3 install awscli
+            cat inventory.txt
       - run:
           name: Configure server
           working_directory: .circleci/ansible
           command: |
             pwd &&
             ls -la
-            cat inventory
+            cat inventory.txt
             ansible-playbook -i inventory.txt configure-server.yml
       - destroy-environment          
 
