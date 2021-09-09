@@ -257,7 +257,8 @@ jobs:
           name: Run migrations
           working_directory: backend
           command: |
-            npm install
+            npm i
+            npm run build
             npm run migrations > migration_status
             echo migration_status
       - run:
