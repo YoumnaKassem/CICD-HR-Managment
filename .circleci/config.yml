@@ -8,7 +8,7 @@ commands:
           name: Destroy environments
           when: on_fail
           command: |
-            aws s3 rb s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --force
+            aws s3 rm --recursive s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}
             aws cloudformation delete-stack --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
             aws cloudformation delete-stack --stack-name updapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
 
@@ -213,6 +213,7 @@ jobs:
           TYPEORM_DATABASE: $TYPEORM_DATABASE
           TYPEORM_MIGRATIONS: $TYPEORM_MIGRATIONS
           TYPEORM_ENTITIES: $TYPEORM_ENTITIES
+          TYPEORM_PORT: $TYPEORM_PORT
     steps:
       - checkout
       - add_ssh_keys:
