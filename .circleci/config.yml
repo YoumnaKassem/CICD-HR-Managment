@@ -305,22 +305,46 @@ jobs:
       - revert-migrations     
       - destroy-environment
                     
-#   deploy-backend:
-#     docker:
-#       # Docker image here that supports Ansible
-#     steps:
-#       # Checkout code from git
-#       # Add ssh keys with fingerprint
-#       # attach workspace
-#       - run:
-#           name: Install dependencies
-#           command: |
-#             # your code here
-#       - run:
-#           name: Deploy backend
-#           command: |
-#             # your code here
-#       # Here's where you will add some code to rollback on failure  
+  deploy-backend:
+    docker:
+      - image: python:3.9.0-alpine
+      environment:
+        TYPEORM_CONNECTION: $TYPEORM_CONNECTION
+        TYPEORM_HOST: $TYPEORM_HOST
+        TYPEORM_USERNAME: $TYPEORM_USERNAME
+        TYPEORM_PASSWORD: $TYPEORM_PASSWORD
+        TYPEORM_DATABASE: $TYPEORM_DATABASE
+        TYPEORM_MIGRATIONS: $TYPEORM_MIGRATIONS
+        TYPEORM_ENTITIES: $TYPEORM_ENTITIES
+        TYPEORM_PORT: $TYPEORM_PORT
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["11:64:d6:54:63:f8:4f:bd:7f:dc:f2:51:32:ab:dd:85"]
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install dependencies
+          working_directory: .circleci/ansible
+          command: |
+            apk add --update ansible curl rsync openssh nodejs npm
+            ansible --version
+            pip3 install --upgrade pip
+            pip3 install awscli
+            aws --version 
+            export ANSIBLE_HOST_KEY_CHECKING=False
+      - run:
+          name: Deploy backend
+          working_directory: .circleci/ansible          
+          command: |
+            export ANSIBLE_HOST_KEY_CHECKING=False 
+            export host_key_checking=False
+            export record_host_keys=False
+            cat inventory.txt
+            ansible-playbook -i inventory.txt deploy-backend.yml -vv
+
+      - revert-migrations
+      - destroy-environment
 
 #   smoke-test:
 #     docker:
@@ -408,8 +432,8 @@ workflows:
           requires: [configure-infrastructure]
       - deploy-frontend:
           requires: [run-migrations]
-#       - deploy-backend:
-#           requires: [run-migrations]
+      - deploy-backend:
+          requires: [run-migrations]
 #       - smoke-test:
 #           requires: [deploy-backend, deploy-frontend]
 #       - cloudfront-update:
