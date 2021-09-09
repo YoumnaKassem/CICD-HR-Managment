@@ -307,7 +307,7 @@ jobs:
                     
   deploy-backend:
     docker:
-      - image: python:3.9.0-alpine
+      - image: python:3.7-alpine3.12
       environment:
         TYPEORM_CONNECTION: $TYPEORM_CONNECTION
         TYPEORM_HOST: $TYPEORM_HOST
