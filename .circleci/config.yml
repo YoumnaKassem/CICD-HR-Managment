@@ -124,7 +124,7 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: Check Frontend against security vulnerabilities
+          name: Check Frontend against known security vulnerabilities
           command: |
             cd frontend
             npm i
